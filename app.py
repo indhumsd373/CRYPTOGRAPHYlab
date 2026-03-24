@@ -1,102 +1,57 @@
 from flask import Flask, render_template, request
-import math
 
 app = Flask(__name__)
-
-# Function to find modular inverse
-def mod_inverse(e, phi):
-    for d in range(1, phi):
-        if (e * d) % phi == 1:
-            return d
-    return None
-
 
 @app.route('/')
 def home():
     return render_template("index.html")
 
-
 @app.route('/calculate', methods=['POST'])
 def calculate():
 
     p = int(request.form['p'])
-    q = int(request.form['q'])
-    message = int(request.form['message'])
+    g = int(request.form['g'])
+    a = int(request.form['a'])
+    b = int(request.form['b'])
 
-    # Step 1: compute n
-    n = p * q
+    # Step 1: Public keys
+    A = pow(g, a, p)
+    B = pow(g, b, p)
 
-    # Step 2: compute phi
-    phi = (p - 1) * (q - 1)
-
-    # Step 3: choose e
-    e = 2
-    while e < phi:
-        if math.gcd(e, phi) == 1:
-            break
-        e += 1
-
-    # Step 4: compute d
-    d = mod_inverse(e, phi)
-
-    # Step 5: encryption
-    c = pow(message, e, n)
-
-    # Step 6: decryption
-    m = pow(c, d, n)
+    # Step 2: Shared secret
+    KA = pow(B, a, p)
+    KB = pow(A, b, p)
 
     steps = [
-        "STEP 1: Choose prime numbers",
-        f"p = {p}",
-        f"q = {q}",
-
+        f"Public Prime (p) = {p}",
+        f"Generator (g) = {g}",
         "",
-
-        "STEP 2: Compute n",
-        "n = p × q",
-        f"n = {p} × {q} = {n}",
-
+        "Step 1: Alice chooses private key a",
+        f"a = {a}",
         "",
-
-        "STEP 3: Compute Euler Totient",
-        "φ(n) = (p − 1)(q − 1)",
-        f"φ(n) = ({p}-1) × ({q}-1) = {phi}",
-
+        "Step 2: Bob chooses private key b",
+        f"b = {b}",
         "",
-
-        "STEP 4: Choose public exponent e",
-        f"e = {e}",
-
+        "Step 3: Alice computes public key",
+        f"A = g^a mod p",
+        f"A = {g}^{a} mod {p} = {A}",
         "",
-
-        "STEP 5: Compute private key d",
-        "d × e mod φ(n) = 1",
-        f"d = {d}",
-
+        "Step 4: Bob computes public key",
+        f"B = g^b mod p",
+        f"B = {g}^{b} mod {p} = {B}",
         "",
-
-        f"Public Key = ({e}, {n})",
-        f"Private Key = ({d}, {n})",
-
+        "Step 5: Exchange public keys",
+        "Alice sends A to Bob",
+        "Bob sends B to Alice",
         "",
-
-        "STEP 6: Encryption",
-        "C = M^e mod n",
-        f"C = {message}^{e} mod {n} = {c}",
-
+        "Step 6: Compute shared secret",
+        f"Alice: K = B^a mod p = {B}^{a} mod {p} = {KA}",
+        f"Bob:   K = A^b mod p = {A}^{b} mod {p} = {KB}",
         "",
-
-        "STEP 7: Decryption",
-        "M = C^d mod n",
-        f"M = {c}^{d} mod {n} = {m}",
-
-        "",
-
-        f"Final Decrypted Message = {m}"
+        f"Final Shared Secret Key = {KA}"
     ]
 
     return render_template("index.html", steps=steps)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
