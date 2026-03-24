@@ -2,45 +2,47 @@
 <html>
 <head>
 
-<title>S-DES Encryption</title>
+<title>RSA Algorithm Demo</title>
 
 <style>
 
 body{
-font-family:Arial;
-background:#f4f4f4;
-padding:40px;
+font-family: Arial;
+background:#f0f4ff;
+text-align:center;
 }
 
 .container{
 background:white;
+width:500px;
+margin:auto;
+margin-top:40px;
 padding:20px;
 border-radius:10px;
-width:600px;
-margin:auto;
+box-shadow:0 0 10px gray;
 }
 
 input{
-width:100%;
-padding:10px;
-margin:10px 0;
+padding:8px;
+margin:5px;
+width:200px;
 }
 
 button{
 padding:10px;
-background:blue;
+background:#4CAF50;
 color:white;
 border:none;
+cursor:pointer;
 }
 
-pre{
-background:black;
-color:#00ff00;
+.result{
+background:#111;
+color:#00ff9c;
 padding:15px;
-}
-
-.error{
-color:red;
+margin-top:20px;
+text-align:left;
+font-family:monospace;
 }
 
 </style>
@@ -51,33 +53,34 @@ color:red;
 
 <div class="container">
 
-<h2>S-DES Encryption Simulator</h2>
+<h2>RSA Encryption Demo</h2>
 
-<form method="POST">
+<form method="POST" action="/calculate">
 
-<label>Plaintext (8 bits)</label>
-<input type="text" name="plaintext" placeholder="Example: 10101010" required>
+<p>Prime Number p</p>
+<input type="number" name="p" required>
 
-<label>Key (10 bits)</label>
-<input type="text" name="key" placeholder="Example: 1010000010" required>
+<p>Prime Number q</p>
+<input type="number" name="q" required>
 
-<button type="submit">Encrypt</button>
+<p>Message (number)</p>
+<input type="number" name="message" required>
+
+<br><br>
+
+<button type="submit">Run RSA</button>
 
 </form>
 
-{% if error %}
-<p class="error">{{error}}</p>
-{% endif %}
-
 {% if steps %}
 
-<h3>Steps</h3>
+<div class="result">
 
-<pre>
 {% for step in steps %}
-{{step}}
+{{step}}<br>
 {% endfor %}
-</pre>
+
+</div>
 
 {% endif %}
 
