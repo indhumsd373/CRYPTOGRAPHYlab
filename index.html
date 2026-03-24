@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>AES Key Expansion</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f0f4ff;
+text-align:center;
+}
+
+.box{
+background:white;
+width:600px;
+margin:auto;
+margin-top:40px;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px gray;
+}
+
+input{
+width:400px;
+padding:8px;
+}
+
+button{
+padding:10px;
+background:#0066ff;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+.result{
+background:black;
+color:#00ff9c;
+padding:15px;
+margin-top:20px;
+text-align:left;
+font-family:monospace;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>AES Key Expansion (2 Rounds)</h2>
+
+<form method="POST" action="/calculate">
+
+<p>Enter AES Key (Hexadecimal)</p>
+
+<input type="text" name="key"
+placeholder="2B7E151628AED2A6ABF7158809CF4F3C"
+required>
+
+<br><br>
+
+<button type="submit">Generate Keys</button>
+
+</form>
+
+{% if steps %}
+
+<div class="result">
+
+{% for s in steps %}
+{{s}}<br>
+{% endfor %}
+
+</div>
+
+{% endif %}
+
+</div>
+
+</body>
+</html>
