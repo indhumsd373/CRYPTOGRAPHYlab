@@ -2,95 +2,143 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# AES S-Box
-sbox = [
-0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
-0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
-0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc,0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15
+P10 = [3,5,2,7,4,10,1,9,8,6]
+P8  = [6,3,7,4,8,5,10,9]
+
+IP = [2,6,3,1,4,8,5,7]
+IP_INV = [4,1,3,5,7,2,8,6]
+
+EP = [4,1,2,3,2,3,4,1]
+P4 = [2,4,3,1]
+
+S0 = [
+[1,0,3,2],
+[3,2,1,0],
+[0,2,1,3],
+[3,1,3,2]
 ]
 
-rcon = [0x01, 0x02]
+S1 = [
+[0,1,2,3],
+[2,0,1,3],
+[3,0,1,0],
+[2,1,0,3]
+]
 
-def rot_word(word):
-    return word[1:] + word[:1]
 
-def sub_word(word):
-    return [sbox[b % len(sbox)] for b in word]
+def permute(bits, table):
+    return ''.join(bits[i-1] for i in table)
 
-def to_hex(word):
-    return " ".join([format(b, '02X') for b in word])
+def left_shift(bits):
+    return bits[1:] + bits[0]
 
-@app.route('/')
-def home():
-    return render_template("index.html")
+def xor(a,b):
+    return ''.join('0' if i==j else '1' for i,j in zip(a,b))
 
-@app.route('/calculate', methods=['POST'])
-def calculate():
+def sbox(bits, box):
+    row = int(bits[0] + bits[3],2)
+    col = int(bits[1] + bits[2],2)
+    return format(box[row][col],'02b')
 
-    key_hex = request.form['key']
 
-    key = list(bytes.fromhex(key_hex))
+def generate_keys(key,steps):
 
-    w0 = key[0:4]
-    w1 = key[4:8]
-    w2 = key[8:12]
-    w3 = key[12:16]
+    p10 = permute(key,P10)
+    steps.append("P10 : "+p10)
+
+    left = p10[:5]
+    right = p10[5:]
+
+    left = left_shift(left)
+    right = left_shift(right)
+
+    k1 = permute(left+right,P8)
+    steps.append("K1 : "+k1)
+
+    left = left_shift(left)
+    left = left_shift(left)
+
+    right = left_shift(right)
+    right = left_shift(right)
+
+    k2 = permute(left+right,P8)
+    steps.append("K2 : "+k2)
+
+    return k1,k2
+
+
+def f_function(bits,key,steps):
+
+    L = bits[:4]
+    R = bits[4:]
+
+    steps.append("L : "+L)
+    steps.append("R : "+R)
+
+    ep = permute(R,EP)
+    steps.append("EP : "+ep)
+
+    x = xor(ep,key)
+    steps.append("XOR : "+x)
+
+    left = x[:4]
+    right = x[4:]
+
+    s0 = sbox(left,S0)
+    s1 = sbox(right,S1)
+
+    steps.append("S0 : "+s0)
+    steps.append("S1 : "+s1)
+
+    p4 = permute(s0+s1,P4)
+    steps.append("P4 : "+p4)
+
+    newL = xor(L,p4)
+
+    return newL + R
+
+
+def encrypt(pt,key):
 
     steps = []
 
-    steps.append("Initial Words")
-    steps.append(f"W0 = {to_hex(w0)}")
-    steps.append(f"W1 = {to_hex(w1)}")
-    steps.append(f"W2 = {to_hex(w2)}")
-    steps.append(f"W3 = {to_hex(w3)}")
+    k1,k2 = generate_keys(key,steps)
 
-    # ROUND 1
-    steps.append("")
-    steps.append("ROUND 1")
+    ip = permute(pt,IP)
+    steps.append("IP : "+ip)
 
-    temp = rot_word(w3)
-    steps.append(f"RotWord(W3) = {to_hex(temp)}")
+    r1 = f_function(ip,k1,steps)
 
-    temp = sub_word(temp)
-    steps.append(f"SubWord = {to_hex(temp)}")
+    swap = r1[4:] + r1[:4]
+    steps.append("SWAP : "+swap)
 
-    temp[0] ^= rcon[0]
-    steps.append(f"Rcon XOR = {to_hex(temp)}")
+    r2 = f_function(swap,k2,steps)
 
-    w4 = [a ^ b for a,b in zip(w0,temp)]
-    w5 = [a ^ b for a,b in zip(w1,w4)]
-    w6 = [a ^ b for a,b in zip(w2,w5)]
-    w7 = [a ^ b for a,b in zip(w3,w6)]
+    cipher = permute(r2,IP_INV)
 
-    steps.append(f"W4 = {to_hex(w4)}")
-    steps.append(f"W5 = {to_hex(w5)}")
-    steps.append(f"W6 = {to_hex(w6)}")
-    steps.append(f"W7 = {to_hex(w7)}")
+    steps.append("CIPHERTEXT : "+cipher)
 
-    # ROUND 2
-    steps.append("")
-    steps.append("ROUND 2")
+    return steps
 
-    temp = rot_word(w7)
-    steps.append(f"RotWord(W7) = {to_hex(temp)}")
 
-    temp = sub_word(temp)
-    steps.append(f"SubWord = {to_hex(temp)}")
+@app.route('/',methods=['GET','POST'])
+def index():
 
-    temp[0] ^= rcon[1]
-    steps.append(f"Rcon XOR = {to_hex(temp)}")
+    steps=[]
+    error=""
 
-    w8 = [a ^ b for a,b in zip(w4,temp)]
-    w9 = [a ^ b for a,b in zip(w5,w8)]
-    w10 = [a ^ b for a,b in zip(w6,w9)]
-    w11 = [a ^ b for a,b in zip(w7,w10)]
+    if request.method == 'POST':
 
-    steps.append(f"W8 = {to_hex(w8)}")
-    steps.append(f"W9 = {to_hex(w9)}")
-    steps.append(f"W10 = {to_hex(w10)}")
-    steps.append(f"W11 = {to_hex(w11)}")
+        plaintext = request.form['plaintext']
+        key = request.form['key']
 
-    return render_template("index.html", steps=steps)
+        if len(plaintext)!=8 or len(key)!=10:
+            error="Plaintext must be 8 bits and key must be 10 bits"
+        else:
+            steps = encrypt(plaintext,key)
+
+    return render_template("index.html",steps=steps,error=error)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

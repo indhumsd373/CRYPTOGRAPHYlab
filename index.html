@@ -1,48 +1,46 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 
-<title>AES Key Expansion</title>
+<title>S-DES Encryption</title>
 
 <style>
 
 body{
 font-family:Arial;
-background:#f0f4ff;
-text-align:center;
+background:#f4f4f4;
+padding:40px;
 }
 
-.box{
+.container{
 background:white;
-width:600px;
-margin:auto;
-margin-top:40px;
 padding:20px;
 border-radius:10px;
-box-shadow:0 0 10px gray;
+width:600px;
+margin:auto;
 }
 
 input{
-width:400px;
-padding:8px;
+width:100%;
+padding:10px;
+margin:10px 0;
 }
 
 button{
 padding:10px;
-background:#0066ff;
+background:blue;
 color:white;
 border:none;
-cursor:pointer;
 }
 
-.result{
+pre{
 background:black;
-color:#00ff9c;
+color:#00ff00;
 padding:15px;
-margin-top:20px;
-text-align:left;
-font-family:monospace;
+}
+
+.error{
+color:red;
 }
 
 </style>
@@ -51,33 +49,35 @@ font-family:monospace;
 
 <body>
 
-<div class="box">
+<div class="container">
 
-<h2>AES Key Expansion (2 Rounds)</h2>
+<h2>S-DES Encryption Simulator</h2>
 
-<form method="POST" action="/calculate">
+<form method="POST">
 
-<p>Enter AES Key (Hexadecimal)</p>
+<label>Plaintext (8 bits)</label>
+<input type="text" name="plaintext" placeholder="Example: 10101010" required>
 
-<input type="text" name="key"
-placeholder="2B7E151628AED2A6ABF7158809CF4F3C"
-required>
+<label>Key (10 bits)</label>
+<input type="text" name="key" placeholder="Example: 1010000010" required>
 
-<br><br>
-
-<button type="submit">Generate Keys</button>
+<button type="submit">Encrypt</button>
 
 </form>
 
+{% if error %}
+<p class="error">{{error}}</p>
+{% endif %}
+
 {% if steps %}
 
-<div class="result">
+<h3>Steps</h3>
 
-{% for s in steps %}
-{{s}}<br>
+<pre>
+{% for step in steps %}
+{{step}}
 {% endfor %}
-
-</div>
+</pre>
 
 {% endif %}
 
