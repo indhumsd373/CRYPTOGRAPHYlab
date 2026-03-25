@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manual CMAC Explorer</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e1e; color: white; padding: 40px; }
+        .container { max-width: 800px; margin: auto; background: #2d2d2d; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #3d3d3d; border: 1px solid #555; color: #00ff00; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #007acc; border: none; color: white; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #005f99; }
+        #log-area { margin-top: 25px; border-left: 3px solid #007acc; padding-left: 15px; }
+        .step { background: #252525; padding: 10px; margin: 5px 0; border-radius: 4px; font-family: monospace; color: #cccccc; }
+        .tag-box { color: #00ff00; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔑 Cipher-based MAC (CMAC) Manual Implementation</h2>
+        <p>This implementation runs a manual AES-128 cycle to generate subkeys and authentication tags.</p>
+        
+        <label>AES Key (32 Hex Characters):</label>
+        <input type="text" id="key" value="2b7e151628aed2a6abf7158809cf4f3c">
+        
+        <label>Message Text:</label>
+        <input type="text" id="msg" value="Hello CMAC">
+        
+        <button onclick="compute()">Generate Authentication Tag</button>
+        
+        <div id="log-area">
+            <div id="final-tag" class="tag-box"></div>
+            <div id="steps-list"></div>
+        </div>
+    </div>
+
+    <script>
+        async function compute() {
+            const key = document.getElementById('key').value;
+            const msg = document.getElementById('msg').value;
+            const res = await fetch('/calculate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({key, msg})
+            });
+            const data = await res.json();
+            document.getElementById('final-tag').innerHTML = "Final MAC Tag: <br>" + data.tag;
+            
+            const list = document.getElementById('steps-list');
+            list.innerHTML = "<h4>Intermediate Steps:</h4>";
+            data.steps.forEach(step => {
+                const div = document.createElement('div');
+                div.className = 'step';
+                div.innerText = step;
+                list.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
