@@ -1,0 +1,21 @@
+def cipher(k, s):
+    # n is the length of the original decoded string
+    n = len(s) - k + 1
+    # Convert input string to a list of integers for easier XORing
+    s_bits = [int(c) for c in s]
+    res = [0] * n
+    
+    current_xor = 0
+    for i in range(n):
+        # If the window has moved past k elements, 
+        # remove the bit that is no longer part of the XOR sum
+        if i >= k:
+            current_xor ^= res[i - k]
+            
+        # The current bit is the encoded bit XORed with the sum of previous k-1 bits
+        res[i] = s_bits[i] ^ current_xor
+        
+        # Update the running XOR sum with the new bit
+        current_xor ^= res[i]
+        
+    return "".join(map(str, res))
